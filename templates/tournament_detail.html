@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>{{ tournament.name }} - Players</h3>
+
+<div class="card p-3 mt-3">
+  <div class="small mb-2">
+    Game: {{ tournament.game }} |
+    Mode: {{ tournament.mode|upper }} |
+    Entry: ₹{{ tournament.entry_fee }} |
+    Prize: ₹{{ tournament.prize_pool }} |
+    Slots: {{ tournament.filled_slots }}/{{ tournament.max_slots }} |
+    Status: {{ tournament.status }}
+  </div>
+
+  {# joined users ki id list bana lo #}
+  {% set joined_user_ids = joins | map(attribute='user_id') | list %}
+
+  {% if tournament.room_id and (current_user.is_admin or current_user.id in joined_user_ids) %}
+  <div class="small text-info mb-2">
+    Room: {{ tournament.room_id }}{% if tournament.room_pass %} | Pass: {{ tournament.room_pass }}{% endif %}
+  </div>
+  {% endif %}
+
+  {% if tournament.winner_note %}
+  <div class="small text-success mb-2">
+    Winner Note: {{ tournament.winner_note }}
+  </div>
+  {% endif %}
+
+  {% if joins %}
+  <div class="table-responsive">
+    <table class="table table-sm table-dark align-middle">
+      <thead>
+        <tr>
+          <th>Slot</th>
+          <th>In‑Game Name</th>
+          <th>In‑Game UID</th>
+          <th>User ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for j in joins %}
+        <tr>
+          <td>{{ j.slot }}</td>
+          <td>{{ j.in_game_name }}</td>
+          <td>{{ j.in_game_uid }}</td>
+          <td>{{ j.user_id }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <span class="text-muted">Abhi tak koi player join nahi hua.</span>
+  {% endif %}
+</div>
+{% endblock %}

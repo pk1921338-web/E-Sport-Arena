@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>E‑Sports Arena</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet">
+
+    <style>
+      body {
+        background: linear-gradient(135deg, #0f0f23 0, #2d1b69 100%);
+        color: #fff;
+      }
+      .navbar {
+        background: rgba(0,0,0,0.9);
+      }
+      .card {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.15);
+        color: #fff;
+      }
+      .btn-custom {
+        background: #ff4444;
+        border: none;
+        border-radius: 25px;
+        color: #fff;
+      }
+      .btn-custom:hover {
+        background: #e63939;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-dark navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
+      <i class="fas fa-trophy"></i> E‑Sports Arena
+    </a>
+
+    <!-- Toggler button (mobile) -->
+    <button class="navbar-toggler" type="button"
+            data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+            aria-controls="mainNavbar" aria-expanded="false"
+            aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse justify-content-end" id="mainNavbar">
+      <ul class="navbar-nav align-items-lg-center">
+        <!-- Social links -->
+        <li class="nav-item">
+          <a href="https://www.youtube.com/@Official_e-sport_arena"
+             target="_blank"
+             class="nav-link text-danger">
+            <i class="fab fa-youtube"></i>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="https://t.me/YOURTELEGRAM"
+             target="_blank"
+             class="nav-link text-info">
+            <i class="fab fa-telegram-plane"></i>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="https://www.instagram.com/esport__arena2026?igsh=MWlzdXM4dnhpcXZkYg=="
+             target="_blank"
+             class="nav-link text-warning">
+            <i class="fab fa-instagram"></i>
+          </a>
+        </li>
+
+        {% if current_user.is_authenticated %}
+        <li class="nav-item">
+          <a href="{{ url_for('dashboard') }}" class="nav-link">Wallet</a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('tournaments') }}" class="nav-link">Tournaments</a>
+        </li>
+
+        {% if current_user.is_admin %}
+        <li class="nav-item">
+          <a href="{{ url_for('admin_panel') }}" class="nav-link text-warning">
+            <i class="fas fa-user-shield"></i> Admin
+          </a>
+        </li>
+        {% endif %}
+
+        <li class="nav-item">
+          <span class="nav-link small">{{ current_user.email }}</span>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-light ms-lg-2 mb-2 mb-lg-0">
+            Logout
+          </a>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline-light me-2 mb-2 mb-lg-0">
+            Login
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{{ url_for('signup') }}" class="btn btn-sm btn-custom mb-2 mb-lg-0">
+            Sign Up
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="container mt-4 mb-5">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="alert alert-info">
+            {% for msg in messages %}
+              <div>{{ msg }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

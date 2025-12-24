@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<h3><i class="fas fa-wallet"></i> Wallet</h3>
+<div class="row">
+  <div class="col-md-6">
+    <div class="card p-3 mb-3">
+      <h6>Winning Amount</h6>
+      <h3 class="text-success">₹{{ current_user.winning_balance }}</h3>
+      <h6 class="mt-3">Withdraw (Winning)</h6>
+      <form method="post" action="{{ url_for('withdraw') }}">
+        <input type="number" name="amount" class="form-control mb-2" min="30" placeholder="Amount" required>
+        <input type="text" name="upi_id" class="form-control mb-2" placeholder="Your UPI ID" required>
+        <button class="btn btn-warning w-100">Send Withdraw Request</button>
+      </form>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card p-3 mb-3">
+      <h6>Added Amount</h6>
+      <h3 class="text-info">₹{{ current_user.added_balance }}</h3>
+      <h6 class="mt-3">Add Money (UPI)</h6>
+      <form method="post" action="{{ url_for('add_money') }}">
+        <select name="amount" class="form-select mb-2">
+          <option value="30">30</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+          <option value="200">200</option>
+          <option value="500">500</option>
+        </select>
+        <input type="text" name="upi_id" class="form-control mb-2" placeholder="Your UPI ID" required>
+        <input type="text" name="txn_id" class="form-control mb-2" placeholder="UPI Txn ID / Note" required>
+        <div class="alert alert-info">
+          Pehle apne UPI app se <strong>9056213556@fam</strong> par amount send karo, fir yahan request submit karo.
+        </div>
+        <button class="btn btn-success w-100">Send Add Money Request</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-6">
+    <h5>Add Money Requests</h5>
+    {% for r in my_adds %}
+      <div class="border rounded p-2 mb-1">
+        ₹{{ r.amount }} -
+        <span class="badge bg-{{ 'success' if r.status=='approved' else 'warning' }}">{{ r.status }}</span><br>
+        <small>{{ r.upi_id }} | {{ r.txn_id }}</small>
+      </div>
+    {% else %}
+      <span class="text-muted">No add-money requests.</span>
+    {% endfor %}
+  </div>
+  <div class="col-md-6">
+    <h5>Withdraw Requests</h5>
+    {% for r in my_withdraws %}
+      <div class="border rounded p-2 mb-1">
+        ₹{{ r.amount }} -
+        <span class="badge bg-{{ 'success' if r.status=='paid' else 'warning' }}">{{ r.status }}</span><br>
+        <small>{{ r.upi_id }}</small>
+      </div>
+    {% else %}
+      <span class="text-muted">No withdraw requests.</span>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

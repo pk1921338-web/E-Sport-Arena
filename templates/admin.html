@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<h3><i class="fas fa-user-shield"></i> Admin Panel</h3>
+
+<h5 class="mt-3">Add Money Requests</h5>
+{% for r in add_reqs %}
+  <div class="border rounded p-2 mb-1">
+    <strong>User ID:</strong> {{ r.user_id }} — ₹{{ r.amount }}
+    <span class="badge bg-{{ 'success' if r.status=='approved' else 'warning' }}">{{ r.status }}</span><br>
+    <small>{{ r.upi_id }} | {{ r.txn_id }}</small><br>
+    {% if r.status != 'approved' %}
+      <a href="{{ url_for('approve_add', req_id=r.id) }}" class="btn btn-sm btn-success mt-1">Approve</a>
+    {% endif %}
+  </div>
+{% else %}
+  <span class="text-muted">No add-money requests.</span>
+{% endfor %}
+
+<h5 class="mt-4">Withdraw Requests</h5>
+{% for r in withdraw_reqs %}
+  <div class="border rounded p-2 mb-1">
+    <strong>User ID:</strong> {{ r.user_id }} — ₹{{ r.amount }}
+    <span class="badge bg-{{ 'success' if r.status=='paid' else 'warning' }}">{{ r.status }}</span><br>
+    <small>{{ r.upi_id }}</small><br>
+    {% if r.status != 'paid' %}
+      <a href="{{ url_for('approve_withdraw', req_id=r.id) }}" class="btn btn-sm btn-success mt-1">Mark Paid</a>
+    {% endif %}
+  </div>
+{% else %}
+  <span class="text-muted">No withdraw requests.</span>
+{% endfor %}
+{% endblock %}

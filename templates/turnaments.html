@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3><i class="fas fa-gamepad"></i> Tournaments</h3>
+  {% if current_user.is_admin %}
+  <a href="{{ url_for('create_tournament') }}" class="btn btn-custom btn-sm">+ Create Tournament</a>
+  {% endif %}
+</div>
+
+{% if tournaments %}
+  {% for t in tournaments %}
+    <div class="card p-3 mb-2">
+      <div class="d-flex justify-content-between">
+        <div>
+          <strong>{{ t.name }}</strong>
+          <span class="badge bg-info ms-2">{{ t.game }}</span>
+          <span class="badge bg-secondary ms-1">{{ t.mode|upper }}</span>
+        </div>
+        <div>
+          <span class="badge bg-{{ 'success' if t.status=='live' else 'secondary' }}">{{ t.status }}</span>
+        </div>
+      </div>
+      <div class="small mt-2">
+        Entry: ₹{{ t.entry_fee }} |
+        Prize: ₹{{ t.prize_pool }} |
+        Slots: {{ t.filled_slots }}/{{ t.max_slots }}
+        {% if t.start_time %}
+          | Start: {{ t.start_time.strftime('%d-%m-%Y %H:%M') }}
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  <span class="text-muted">No tournaments yet.</span>
+{% endif %}
+{% endblock %}

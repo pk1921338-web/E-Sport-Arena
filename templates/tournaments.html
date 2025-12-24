@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3><i class="fas fa-gamepad"></i> Tournaments</h3>
+  {% if current_user.is_admin %}
+  <a href="{{ url_for('create_tournament') }}" class="btn btn-custom btn-sm">+ Create Tournament</a>
+  {% endif %}
+</div>
+
+{% if tournaments %}
+  {% for t in tournaments %}
+    <div class="card p-3 mb-2">
+      <div class="d-flex justify-content-between">
+        <div>
+          <strong>{{ t.name }}</strong>
+          <span class="badge bg-info ms-2">{{ t.game }}</span>
+          <span class="badge bg-secondary ms-1">{{ t.mode|upper }}</span>
+        </div>
+        <div>
+          <span class="badge bg-{{ 'success' if t.status=='live' else 'secondary' }}">{{ t.status }}</span>
+        </div>
+      </div>
+
+      <div class="small mt-2">
+        Entry: ₹{{ t.entry_fee }} |
+        Prize: ₹{{ t.prize_pool }} |
+        Slots: {{ t.filled_slots }}/{{ t.max_slots }}
+        {% if t.start_time %}
+          | Start: {{ t.start_time.strftime('%d-%m-%Y %H:%M') }}
+        {% endif %}
+      </div>
+
+      {% if t.room_id and (t.id in joined_ids or current_user.is_admin) %}
+      <div class="small text-info mt-1">
+        Room: {{ t.room_id }}{% if t.room_pass %} | Pass: {{ t.room_pass }}{% endif %}
+      </div>
+      {% endif %}
+
+      {% if t.winner_note %}
+      <div class="small text-success mt-1">
+        Winner Note: {{ t.winner_note }}
+      </div>
+      {% endif %}
+
+      <div class="mt-2 d-flex justify-content-between">
+        <div>
+          {% if t.status in ['upcoming', 'live'] and t.filled_slots < t.max_slots %}
+            <a href="{{ url_for('join_tournament', t_id=t.id) }}" class="btn btn-sm btn-custom">Join</a>
+          {% else %}
+            <span class="badge bg-danger">Full / Closed</span>
+          {% endif %}
+
+          <!-- sab users ke liye players list -->
+          <a href="{{ url_for('tournament_detail', t_id=t.id) }}"
+             class="btn btn-sm btn-outline-light ms-1">
+            View Players
+          </a>
+        </div>
+
+        {% if current_user.is_admin %}
+        <div>
+          <!-- Edit Tournament -->
+          <a href="{{ url_for('admin_edit_tournament', t_id=t.id) }}"
+             class="btn btn-sm btn-warning mt-1 ms-1">
+             Edit
+          </a>
+
+          <!-- Set Winner -->
+          <form method="post" action="{{ url_for('set_winner', t_id=t.id) }}" class="d-inline">
+            <input type="number" name="user_id" placeholder="Winner User ID"
+                   class="form-control form-control-sm d-inline-block" style="width:120px" required>
+            <input type="number" name="prize" placeholder="Prize ₹"
+                   class="form-control form-control-sm d-inline-block" style="width:100px" required>
+            <button class="btn btn-sm btn-success mt-1">Set Winner</button>
+          </form>
+
+          <!-- Give Prize -->
+          <form method="post" action="{{ url_for('give_prize', t_id=t.id) }}" class="d-inline ms-1">
+            <input type="number" name="user_id" placeholder="User ID"
+                   class="form-control form-control-sm d-inline-block" style="width:120px" required>
+            <input type="number" name="amount" placeholder="₹"
+                   class="form-control form-control-sm d-inline-block" style="width:80px" required>
+            <button class="btn btn-sm btn-info mt-1">Give Prize</button>
+          </form>
+
+          <!-- Delete Tournament -->
+          <a href="{{ url_for('delete_tournament', t_id=t.id) }}"
+             class="btn btn-sm btn-danger mt-1 ms-1"
+             onclick="return confirm('Delete this tournament?');">
+             Delete
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  <span class="text-muted">No tournaments yet.</span>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <div class="card p-4 text-center">
+            <h4>Welcome to E-Sports Arena</h4>
+            <a href="{{ url_for('login') }}" class="btn btn-custom w-100 mt-3">Login</a>
+            <a href="{{ url_for('signup') }}" class="btn btn-outline-light w-100 mt-2">Create Account</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

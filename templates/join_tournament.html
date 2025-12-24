@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Join: {{ tournament.name }}</h3>
+<div class="card p-3 mt-3">
+  <form method="post">
+    <div class="mb-2">
+      <label class="form-label">In‑Game Name</label>
+      <input type="text" name="in_game_name" class="form-control" required>
+    </div>
+    <div class="mb-2">
+      <label class="form-label">In‑Game UID</label>
+      <input type="text" name="in_game_uid" class="form-control" required>
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Slot Number (1–{{ tournament.max_slots }})</label>
+      <input type="number" name="slot" min="1" max="{{ tournament.max_slots }}" class="form-control" required>
+      {% if taken_slots %}
+      <small class="text-warning">Taken slots: {{ taken_slots|join(', ') }}</small>
+      {% endif %}
+    </div>
+    <label>Wallet select karo:</label><br>
+  <input type="radio" name="wallet" value="winning" required>
+  Winning Wallet (₹{{ current_user.winning_balance }})<br>
+
+  <input type="radio" name="wallet" value="added" required>
+  Added Wallet (₹{{ current_user.added_balance }})<br>
+    <button class="btn btn-success w-100 mt-2">Pay & Join</button>
+  </form>
+</div>
+{% endblock %}

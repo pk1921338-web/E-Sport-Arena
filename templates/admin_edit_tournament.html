@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Edit Tournament: {{ t.name }}</h3>
+
+<div class="card p-3 mt-3">
+  <form method="post">
+    <div class="mb-2">
+      <label class="form-label">Status</label>
+      <select name="status" class="form-select">
+        <option value="upcoming" {% if t.status == 'upcoming' %}selected{% endif %}>Upcoming</option>
+        <option value="live" {% if t.status == 'live' %}selected{% endif %}>Live</option>
+        <option value="finished" {% if t.status == 'finished' %}selected{% endif %}>Finished</option>
+      </select>
+    </div>
+
+    <!-- Monthly Grand flag -->
+    <div class="form-check mb-2">
+      <input class="form-check-input" type="checkbox" name="is_grand" value="1"
+             id="isGrandEdit" {% if t.is_grand %}checked{% endif %}>
+      <label class="form-check-label" for="isGrandEdit">
+        Monthly Grand Tournament
+      </label>
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label">Room ID</label>
+      <input type="text" name="room_id" class="form-control" value="{{ t.room_id or '' }}">
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label">Room Password</label>
+      <input type="text" name="room_pass" class="form-control" value="{{ t.room_pass or '' }}">
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label">Winner Note</label>
+      <textarea name="winner_note" class="form-control" rows="2">{{ t.winner_note or '' }}</textarea>
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label">Admin Note (private)</label>
+      <textarea name="admin_note" class="form-control" rows="3">{{ t.admin_note or '' }}</textarea>
+    </div>
+
+    <button class="btn btn-primary w-100 mt-2">Save Changes</button>
+  </form>
+</div>
+{% endblock %}
