@@ -1,17 +1,30 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
+from flask_login import (
+    LoginManager, login_user, logout_user,
+    login_required, current_user, UserMixin
+)
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'change-this-secret-key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///esports.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Session ko practically unlimited bana do (20 saal)
+app.permanent_session_lifetime = timedelta(days=365 * 20)
+
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+
+# Har request se pehle session permanent set karo
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
 
 
 # ------------- MODELS -------------
@@ -123,7 +136,8 @@ def login():
             flash('Invalid email or password.')
             return redirect(url_for('login'))
 
-        login_user(user)
+        # Yahan remember=True add kiya: user browser close/open ke baad bhi logged-in rahega
+        login_user(user, remember=True)
         return redirect(url_for('dashboard'))
 
     return render_template('login.html')
@@ -139,8 +153,14 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    my_adds = AddRequest.query.filter_by(user_id=current_user.id).order_by(AddRequest.created_at.desc()).all()
-    my_withdraws = WithdrawRequest.query.filter_by(user_id=current_user.id).order_by(WithdrawRequest.created_at.desc()).all()
+    my_adds = AddRequest.query.filter_by(
+        user_id=current_user.id
+    ).order_by(AddRequest.created_at.desc()).all()
+
+    my_withdraws = WithdrawRequest.query.filter_by(
+        user_id=current_user.id
+    ).order_by(WithdrawRequest.created_at.desc()).all()
+
     return render_template(
         'dashboard.html',
         my_adds=my_adds,
@@ -152,10 +172,8 @@ def dashboard():
 @login_required
 def tournaments():
     all_t = Tournament.query.order_by(Tournament.created_at.desc()).all()
-
     joins = TournamentJoin.query.filter_by(user_id=current_user.id).all()
     joined_ids = {j.tournament_id for j in joins}
-
     return render_template('tournaments.html', tournaments=all_t, joined_ids=joined_ids)
 
 
@@ -164,11 +182,12 @@ def tournaments():
 @login_required
 def tournament_detail(t_id):
     t = Tournament.query.get_or_404(t_id)
-    joins = (TournamentJoin
-             .query
-             .filter_by(tournament_id=t_id)
-             .order_by(TournamentJoin.slot.asc())
-             .all())
+    joins = (
+        TournamentJoin.query
+        .filter_by(tournament_id=t_id)
+        .order_by(TournamentJoin.slot.asc())
+        .all()
+    )
     return render_template('tournament_detail.html', tournament=t, joins=joins)
 
 
@@ -248,7 +267,9 @@ def join_tournament(t_id):
         return redirect(url_for('tournaments'))
 
     # agar already joined hai
-    existing = TournamentJoin.query.filter_by(tournament_id=t_id, user_id=current_user.id).first()
+    existing = TournamentJoin.query.filter_by(
+        tournament_id=t_id, user_id=current_user.id
+    ).first()
     if existing:
         flash('Aap pehle hi is tournament me joined ho.')
         return redirect(url_for('tournaments'))
@@ -264,7 +285,9 @@ def join_tournament(t_id):
             return redirect(url_for('join_tournament', t_id=t_id))
 
         # slot already taken?
-        taken = TournamentJoin.query.filter_by(tournament_id=t_id, slot=slot).first()
+        taken = TournamentJoin.query.filter_by(
+            tournament_id=t_id, slot=slot
+        ).first()
         if taken:
             flash('Ye slot already taken hai.')
             return redirect(url_for('join_tournament', t_id=t_id))
@@ -303,8 +326,12 @@ def join_tournament(t_id):
         return redirect(url_for('tournaments'))
 
     # GET request – form show karo
-    taken_slots = [j.slot for j in TournamentJoin.query.filter_by(tournament_id=t_id).all()]
-    return render_template('join_tournament.html', tournament=t, taken_slots=taken_slots)
+    taken_slots = [
+        j.slot for j in TournamentJoin.query.filter_by(tournament_id=t_id).all()
+    ]
+    return render_template(
+        'join_tournament.html', tournament=t, taken_slots=taken_slots
+    )
 
 
 @app.route('/add-money', methods=['POST'])
@@ -357,7 +384,11 @@ def admin_panel():
 
     add_reqs = AddRequest.query.order_by(AddRequest.created_at.desc()).all()
     withdraw_reqs = WithdrawRequest.query.order_by(WithdrawRequest.created_at.desc()).all()
-    return render_template('admin.html', add_reqs=add_reqs, withdraw_reqs=withdraw_reqs)
+    return render_template(
+        'admin.html',
+        add_reqs=add_reqs,
+        withdraw_reqs=withdraw_reqs
+    )
 
 
 @app.route('/admin/approve-add/<int:req_id>')
