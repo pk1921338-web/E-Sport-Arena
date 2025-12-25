@@ -100,6 +100,28 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+# ---------- TEMP INIT ROUTES (EK BAAR USE KARKE BAAD ME HATA DENA) ----------
+@app.route('/init-db')
+def init_db():
+    db.create_all()
+    return "DB tables created"
+
+
+@app.route('/create-admin')
+def create_admin():
+    if User.query.filter_by(is_admin=True).first():
+        return "Admin already exists"
+    admin = User(
+        email='pk1921338@gmail.com',
+        password_hash=generate_password_hash('priyanshu'),
+        is_admin=True
+    )
+    db.session.add(admin)
+    db.session.commit()
+    return "Admin created"
+# ---------------------------------------------------------------------------
+
+
 # ------------- ROUTES -------------
 @app.route('/')
 def index():
@@ -484,14 +506,4 @@ def set_winner(t_id):
 
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        if not User.query.filter_by(is_admin=True).first():
-            admin = User(
-                email='pk1921338@gmail.com',
-                password_hash=generate_password_hash('priyanshu'),
-                is_admin=True
-            )
-            db.session.add(admin)
-            db.session.commit()
     app.run(debug=True)
