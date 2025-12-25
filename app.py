@@ -10,10 +10,17 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'change-this-secret-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///esports.db'
+
+# PostgreSQL database (Render Postgres)
+app.config['SQLALCHEMY_DATABASE_URI'] = (
+    'postgresql://esport_arena_db_user:'
+    'IhrG2vB8YZYQyKqRu6zulfJ61zP7uxC1'
+    '@dpg-d56lljbuibrs739ml060-a/esport_arena_db'
+)
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Session ko practically unlimited bana do (20 saal)
+# Session ko bahut lamba (20 saal) bana do
 app.permanent_session_lifetime = timedelta(days=365 * 20)
 
 db = SQLAlchemy(app)
@@ -136,7 +143,7 @@ def login():
             flash('Invalid email or password.')
             return redirect(url_for('login'))
 
-        # Yahan remember=True add kiya: user browser close/open ke baad bhi logged-in rahega
+        # Browser close/open ke baad bhi login rahe
         login_user(user, remember=True)
         return redirect(url_for('dashboard'))
 
