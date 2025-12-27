@@ -6,18 +6,21 @@ from flask_login import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
-
+import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'change-this-secret-key'
 
-# PostgreSQL database (Render Postgres)
-app.config['SQLALCHEMY_DATABASE_URI'] = (
-    'postgresql://esport_arena_db_user:'
-    'IhrG2vB8YZYQyKqRu6zulfJ61zP7uxC1'
-    '@dpg-d56lljbuibrs739ml060-a/esport_arena_db'
+# ----------------- DATABASE CONFIG (NEON) -----------------
+
+# Production me ye env var se lena best hai:
+# export DATABASE_URL="postgresql://neondb_owner:...@.../neondb?sslmode=require&channel_binding=require"
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://neondb_owner:npg_UjnzqOd5caZ9@ep-square-unit-a1w4wpc1-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 )
 
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Session ko bahut lamba (20 saal) bana do
@@ -27,12 +30,10 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-
 # Har request se pehle session permanent set karo
 @app.before_request
 def make_session_permanent():
     session.permanent = True
-
 
 # ------------- MODELS -------------
 class User(UserMixin, db.Model):
@@ -45,7 +46,6 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-
 class AddRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -55,7 +55,6 @@ class AddRequest(db.Model):
     status = db.Column(db.String(20), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-
 class WithdrawRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -63,7 +62,6 @@ class WithdrawRequest(db.Model):
     upi_id = db.Column(db.String(100))
     status = db.Column(db.String(20), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
 
 class Tournament(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -81,9 +79,7 @@ class Tournament(db.Model):
     room_id = db.Column(db.String(50))
     room_pass = db.Column(db.String(50))
     admin_note = db.Column(db.Text)
-    # NEW: monthly grand flag
-    is_grand = db.Column(db.Boolean, default=False)
-
+    is_grand = db.Column(db.Boolean, default=False)  # monthly grand flag
 
 class TournamentJoin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -93,7 +89,6 @@ class TournamentJoin(db.Model):
     in_game_uid = db.Column(db.String(50))
     slot = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -105,7 +100,6 @@ def index():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     return render_template('index.html')
-
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -130,7 +124,6 @@ def signup():
 
     return render_template('signup.html')
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -142,19 +135,16 @@ def login():
             flash('Invalid email or password.')
             return redirect(url_for('login'))
 
-        # Browser close/open ke baad bhi login rahe
         login_user(user, remember=True)
         return redirect(url_for('dashboard'))
 
     return render_template('login.html')
-
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('index'))
-
 
 @app.route('/dashboard')
 @login_required
@@ -173,7 +163,6 @@ def dashboard():
         my_withdraws=my_withdraws
     )
 
-
 @app.route('/tournaments')
 @login_required
 def tournaments():
@@ -182,8 +171,6 @@ def tournaments():
     joined_ids = {j.tournament_id for j in joins}
     return render_template('tournaments.html', tournaments=all_t, joined_ids=joined_ids)
 
-
-# detail + players list (sab users ke liye)
 @app.route('/tournament/<int:t_id>')
 @login_required
 def tournament_detail(t_id):
@@ -195,7 +182,6 @@ def tournament_detail(t_id):
         .all()
     )
     return render_template('tournament_detail.html', tournament=t, joins=joins)
-
 
 @app.route('/admin/create-tournament', methods=['GET', 'POST'])
 @login_required
@@ -212,7 +198,7 @@ def create_tournament():
         prize_pool = float(request.form['prize_pool'])
         max_slots = int(request.form['max_slots'])
         start_time_str = request.form['start_time']
-        is_grand = bool(request.form.get('is_grand'))  # NEW
+        is_grand = bool(request.form.get('is_grand'))
 
         start_time = datetime.fromisoformat(start_time_str) if start_time_str else None
 
@@ -233,8 +219,6 @@ def create_tournament():
 
     return render_template('create_tournament.html')
 
-
-# admin edit page
 @app.route('/admin/tournament/<int:t_id>/edit', methods=['GET', 'POST'])
 @login_required
 def admin_edit_tournament(t_id):
@@ -249,7 +233,7 @@ def admin_edit_tournament(t_id):
         t.room_id = request.form.get('room_id', '').strip() or None
         t.room_pass = request.form.get('room_pass', '').strip() or None
         t.admin_note = request.form.get('admin_note', '').strip() or None
-        t.is_grand = bool(request.form.get('is_grand'))  # NEW
+        t.is_grand = bool(request.form.get('is_grand'))
 
         new_status = request.form.get('status')
         if new_status in ['upcoming', 'live', 'finished']:
@@ -261,18 +245,15 @@ def admin_edit_tournament(t_id):
 
     return render_template('admin_edit_tournament.html', t=t)
 
-
 @app.route('/tournaments/<int:t_id>/join', methods=['GET', 'POST'])
 @login_required
 def join_tournament(t_id):
     t = Tournament.query.get_or_404(t_id)
 
-    # tournament full ya closed
     if t.filled_slots >= t.max_slots or t.status not in ['upcoming', 'live']:
         flash('Tournament full ya closed hai.')
         return redirect(url_for('tournaments'))
 
-    # agar already joined hai
     existing = TournamentJoin.query.filter_by(
         tournament_id=t_id, user_id=current_user.id
     ).first()
@@ -285,12 +266,10 @@ def join_tournament(t_id):
         in_game_uid = request.form['in_game_uid'].strip()
         slot = int(request.form['slot'])
 
-        # slot range check
         if slot < 1 or slot > t.max_slots:
             flash('Invalid slot number.')
             return redirect(url_for('join_tournament', t_id=t_id))
 
-        # slot already taken?
         taken = TournamentJoin.query.filter_by(
             tournament_id=t_id, slot=slot
         ).first()
@@ -298,7 +277,6 @@ def join_tournament(t_id):
             flash('Ye slot already taken hai.')
             return redirect(url_for('join_tournament', t_id=t_id))
 
-        # wallet selection
         wallet = request.form.get('wallet')
         fee = t.entry_fee
 
@@ -331,14 +309,12 @@ def join_tournament(t_id):
         flash('Tournament join ho gaya. Best of luck!')
         return redirect(url_for('tournaments'))
 
-    # GET request – form show karo
     taken_slots = [
         j.slot for j in TournamentJoin.query.filter_by(tournament_id=t_id).all()
     ]
     return render_template(
         'join_tournament.html', tournament=t, taken_slots=taken_slots
     )
-
 
 @app.route('/add-money', methods=['POST'])
 @login_required
@@ -357,7 +333,6 @@ def add_money():
     db.session.commit()
     flash('Add-money request submitted. Pehle UPI se payment karo, phir admin approve karega.')
     return redirect(url_for('dashboard'))
-
 
 @app.route('/withdraw', methods=['POST'])
 @login_required
@@ -379,8 +354,6 @@ def withdraw():
     flash('Withdraw request submitted. Admin approve karega.')
     return redirect(url_for('dashboard'))
 
-
-# ------------- ADMIN SIMPLE APPROVAL -------------
 @app.route('/admin')
 @login_required
 def admin_panel():
@@ -395,7 +368,6 @@ def admin_panel():
         add_reqs=add_reqs,
         withdraw_reqs=withdraw_reqs
     )
-
 
 @app.route('/admin/approve-add/<int:req_id>')
 @login_required
@@ -412,7 +384,6 @@ def approve_add(req_id):
         db.session.commit()
     return redirect(url_for('admin_panel'))
 
-
 @app.route('/admin/approve-withdraw/<int:req_id>')
 @login_required
 def approve_withdraw(req_id):
@@ -428,7 +399,6 @@ def approve_withdraw(req_id):
         db.session.commit()
     return redirect(url_for('admin_panel'))
 
-
 @app.route('/admin/tournament/<int:t_id>/delete')
 @login_required
 def delete_tournament(t_id):
@@ -442,7 +412,6 @@ def delete_tournament(t_id):
     db.session.commit()
     flash('Tournament deleted.')
     return redirect(url_for('tournaments'))
-
 
 @app.route('/admin/tournament/<int:t_id>/give-prize', methods=['POST'])
 @login_required
@@ -459,7 +428,6 @@ def give_prize(t_id):
     db.session.commit()
     flash(f'₹{amount} prize user {user.email} ko add ho gaya.')
     return redirect(url_for('tournaments'))
-
 
 @app.route('/admin/tournament/<int:t_id>/set-winner', methods=['POST'])
 @login_required
@@ -481,6 +449,8 @@ def set_winner(t_id):
     flash('Winner set ho gaya, prize add ho gaya.')
     return redirect(url_for('tournaments'))
 
-
 if __name__ == '__main__':
+    # Pehli baar run karte waqt locally:
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
